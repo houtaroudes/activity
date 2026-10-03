@@ -1,9 +1,11 @@
-// Appends one line to log.jsonl describing today's contribution activity.
-// Runs from a scheduled GitHub Actions workflow, see .github/workflows/daily.yml.
+// Records today's contribution activity as one line in log.jsonl, replacing any
+// line already written for the same date. Runs from a scheduled GitHub Actions
+// workflow, see .github/workflows/daily.yml.
 
-import { appendFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 const USER = "houtaroudes";
+const FILE = "log.jsonl";
 const ENDPOINT = `https://github-contributions-api.jogruber.de/v4/${USER}?y=last`;
 
 const today = new Date().toISOString().slice(0, 10);
@@ -20,6 +22,18 @@ function currentStreak(days) {
     cursor.setUTCDate(cursor.getUTCDate() - 1);
   }
   return streak;
+}
+
+async function readEntries() {
+  try {
+    const text = await readFile(FILE, "utf8");
+    return text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 async function main() {
@@ -39,7 +53,16 @@ async function main() {
   } catch (error) {
     console.error(`Activity API unavailable: ${error.message}`);
   }
-  await appendFile("log.jsonl", `${JSON.stringify(entry)}\n`);
+
+  // Keep exactly one line per date, so a second run on the same day rewrites it.
+  const kept = (await readEntries()).filter((line) => {
+    try {
+      return JSON.parse(line).date !== today;
+    } catch {
+      return true;
+    }
+  });
+  await writeFile(FILE, [...kept, JSON.stringify(entry)].join("\n") + "\n");
   console.log(JSON.stringify(entry));
 }
 
