@@ -1,0 +1,38 @@
+name: Daily activity log
+
+on:
+  schedule:
+    - cron: "23 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-activity
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Append today's entry
+        run: node scripts/log.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name "HoutarouDes"
+          git config user.email "houtaroudes@gmail.com"
+          git add log.jsonl
+          if git diff --cached --quiet; then
+            echo "No change to commit."
+            exit 0
+          fi
+          git commit -m "Log $(date -u +%Y-%m-%d)"
+          git push
