@@ -36,7 +36,41 @@ async function readEntries() {
   }
 }
 
+/**
+ * What to record when the API could not answer: the last totals it did give,
+ * tagged with the date they came from. Writing zeros instead would draw a
+ * collapse in the graph that never happened.
+ */
+function carriedForward(kept, fallback) {
+  for (let i = kept.length - 1; i >= 0; i -= 1) {
+    try {
+      const last = JSON.parse(kept[i]);
+      if (typeof last.total !== "number") continue;
+      return {
+        date: today,
+        total: last.total,
+        activeDays: last.activeDays ?? 0,
+        streak: last.streak ?? 0,
+        source: "unavailable",
+        carriedFrom: last.date,
+      };
+    } catch {
+      // A malformed older line is not a source of truth; keep looking back.
+    }
+  }
+  return fallback;
+}
+
 async function main() {
+  // Read first: a failed fetch falls back to the most recent entry.
+  const kept = (await readEntries()).filter((line) => {
+    try {
+      return JSON.parse(line).date !== today;
+    } catch {
+      return true;
+    }
+  });
+
   let entry = { date: today, total: 0, activeDays: 0, streak: 0, source: "unavailable" };
   try {
     const response = await fetch(ENDPOINT);
@@ -51,17 +85,12 @@ async function main() {
       source: "api",
     };
   } catch (error) {
+    entry = carriedForward(kept, entry);
     console.error(`Activity API unavailable: ${error.message}`);
   }
 
-  // Keep exactly one line per date, so a second run on the same day rewrites it.
-  const kept = (await readEntries()).filter((line) => {
-    try {
-      return JSON.parse(line).date !== today;
-    } catch {
-      return true;
-    }
-  });
+  // One line per date: the kept lines are older dates, so a second run today
+  // replaces today's line rather than adding another.
   await writeFile(FILE, [...kept, JSON.stringify(entry)].join("\n") + "\n");
   console.log(JSON.stringify(entry));
 }
