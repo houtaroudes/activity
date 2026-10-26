@@ -25,6 +25,11 @@ jobs:
       - name: Append today's entry
         run: node scripts/log.mjs
 
+      # Stops the run before the commit if a date appears twice, so a bad line
+      # never reaches the branch the graph reads from.
+      - name: Check for a duplicate day
+        run: node scripts/check-log.mjs
+
       - name: Commit and push
         run: |
           git config user.name "HoutarouDes"

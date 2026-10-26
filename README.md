@@ -17,4 +17,6 @@ look like a collapse to zero.
 
 - `log.jsonl`: one JSON object per day, oldest first.
 - `scripts/log.mjs`: builds the daily line.
+- `scripts/check-log.mjs`: fails if a date appears twice, and runs in the
+  workflow before the commit.
 - `.github/workflows/daily.yml`: the schedule.
