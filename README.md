@@ -20,3 +20,5 @@ look like a collapse to zero.
 - `scripts/check-log.mjs`: fails if a date appears twice, and runs in the
   workflow before the commit.
 - `.github/workflows/daily.yml`: the schedule.
+
+<!-- 2026-10-28: Worked on Trey KICKs payment-proof upload and staff review queue. -->
