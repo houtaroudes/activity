@@ -53,3 +53,4 @@
 {"date":"2026-11-24","total":1027,"activeDays":86,"streak":53,"source":"api"}
 {"date":"2026-11-25","total":1035,"activeDays":87,"streak":54,"source":"api"}
 {"date":"2026-11-26","total":1041,"activeDays":88,"streak":55,"source":"api"}
+{"date":"2026-11-27","total":1041,"activeDays":88,"streak":55,"source":"unavailable","carriedFrom":"2026-11-26"}
